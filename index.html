@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Memory Tests</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+  </style>
+</head>
+<body>
+  <h1 id="testTitle">🧠 Forward and Reverse Memory Span Test</h1>
+  <p id="instructions">
+    This is a training test for spatial and visual memory capacity.
+    Follow the sequence of blocks (💃), and repeat them in the forward or reverse order.
+  </p>
+
+  <!-- Memory Span -->
+  <div id="grid"></div>
+
+  <!-- Digit Symbol Coding Test -->
+  <div id="digit-symbol" style="display:none">
+    <p>Match the symbol shown above to its correct digit (1–3) using the legend below.</p>
+    <div id="current-symbol" class="symbol-display"></div>
+    <div id="legend-row" class="legend-container"></div>
+    <div class="button-row">
+      <button class="choice-btn" data-digit="1">1</button>
+      <button class="choice-btn" data-digit="2">2</button>
+      <button class="choice-btn" data-digit="3">3</button>
+    </div>
+    <div class="status">
+      <p>Time left: <span id="timer">90</span> seconds</p>
+      <p>Score: <span id="digit-score">0</span></p>
+    </div>
+  </div>
+
+  <!-- Trail Making Test A -->
+  <div id="trailA-test" style="display:none">
+    <h2>🔵 Trail Making Test – Part A</h2>
+    <p>Click numbers from 1 to 24 in order as fast as you can. Timer starts on first click.</p>
+    <div id="trailA-grid" class="trail-grid"></div>
+    <p id="trailA-timer"></p>
+  </div>
+
+  <!-- Trail Making Test B -->
+  <div id="trailB-test" style="display:none">
+    <h2>🔵 Trail Making Test – Part B</h2>
+    <p>Click alternating numbers and letters (1-A-2-B…) as fast as you can. Timer starts on first click.</p>
+    <div id="trailB-grid" class="trail-grid"></div>
+    <p id="trailB-timer"></p>
+  </div>
+
+  <!-- Grammatical Reasoning Test -->
+  <div id="grammatical-reasoning">
+    <h2>Grammatical Reasoning Test</h2>
+    <div id="instruction" class="statement">Is the following statement true or false?</div>
+    <div class="test-container">
+      <div id="square" class="shape">□</div>
+      <div id="triangle" class="shape">△</div>
+    </div>
+    <div id="statement" class="statement"></div>
+    <div class="button-container">
+      <button id="true-btn">True</button>
+      <button id="false-btn">False</button>
+    </div>
+    <div id="timer" class="timer">Time: 45s</div>
+    <div id="score" class="score"></div>
+  </div>
+
+  <!-- Progressive Matrices Test -->
+  <div id="progressive-matrices">
+    <h1>Progressive Matrices Test</h1>
+    <p>In this test, you'll see a 3×3 pattern with one missing piece (bottom right). Click the shape below that completes the pattern.</p>
+    <div id="grid-container"></div>
+    <div id="choices-container"></div>
+    <div id="score-container">
+      Score: <span id="pm-score">0</span><br>
+      Trial: <span id="pm-trial">1/17</span>
+    </div>
+    <div id="message"></div>
+  </div>
+
+  <button id="startBtn">Start Test</button>
+  <button id="submitBtn" disabled>Submit</button>
+  <p id="result"></p>
+
+  <div id="time-up-overlay" style="display: none;">
+  <div id="time-up-box">
+    ✅ Time's up!
+  </div>
+
+<div id="final-score" style="display:none;">
+  <h2>🧠 Final Results</h2>
+  <p id="score-summary"></p>
+  <button onclick="location.reload()">🔄 Retake Tests</button>
+</div>
+</div>
+
+ <script>
+  const allScores = { forward: 0, reverse: 0, digit: 0, trailsA: 0, trailsB: 0, grammar: 0, matrices: 0 };
+  let span = 5, trial = 1, maxTrials = 3, correctCount = 0;
+  let phase = "forward", testState = "memory";
+  let sequence = [], userSequence = [], timerInterval, currentSymbol = null;
+
+  const digitSymbolLegend = [
+    { symbol: "◉", value: "1" }, { symbol: "◍", value: "2" },
+    { symbol: "◌", value: "3" }, { symbol: "◕", value: "1" },
+    { symbol: "◇", value: "2" }, { symbol: "◖", value: "3" }
+  ];
+
+  async function getSequence() {
+    const res = await fetch("/get_sequence", {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ span })
+    });
+    const data = await res.json();
+    return data.sequence;
+  }
+
+  async function checkSequence(userSeq, correctSeq) {
+    const res = await fetch("/check_sequence", {
+      method: "POST",
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_sequence: userSeq, correct_sequence: correctSeq })
+    });
+    return await res.json();
+  }
+
+  function flash(boxId) {
+    return new Promise(res => {
+      const box = document.getElementById(boxId);
+      box.innerText = "💃";
+      setTimeout(() => { box.innerText = ""; res(); }, 400);
+    });
+  }
+
+  async function showSequence(seq) {
+    for (let idx of seq) {
+      await flash("box" + idx);
+      await new Promise(r => setTimeout(r, 150));
+    }
+  }
+
+  function createGrid() {
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+    for (let i = 0; i < 16; i++) {
+      const box = document.createElement("div");
+      box.classList.add("box");
+      box.id = "box" + i;
+      box.onclick = () => {
+        if (!box.classList.contains("clicked")) {
+          userSequence.push(i);
+          box.classList.add("clicked");
+        }
+      };
+      grid.appendChild(box);
+    }
+  }
+
+  async function runTrial() {
+    userSequence = [];
+    document.getElementById("submitBtn").disabled = true;
+    document.getElementById("result").innerText =
+      `${phase === "forward" ? "▶️ Forward" : "🔁 Reverse"} Memory Test – Trial ${trial} of ${maxTrials}`;
+    createGrid();
+    sequence = await getSequence();
+    await showSequence(sequence);
+    document.getElementById("submitBtn").disabled = false;
+  }
+
+  document.getElementById("submitBtn").onclick = async () => {
+    const attempt = phase === "reverse" ? [...userSequence].reverse() : userSequence;
+    const res = await checkSequence(attempt, sequence);
+    if (res.correct) {
+      correctCount++;
+      allScores[phase === "forward" ? "forward" : "reverse"]++;
+    }
+    trial++;
+    if (trial <= maxTrials) {
+      await runTrial();
+    } else if (phase === "forward") {
+      phase = "reverse"; trial = 1;
+      document.getElementById("result").innerText =
+        `✅ Forward done (${allScores.forward}/${maxTrials}). Starting Reverse…`;
+      setTimeout(runTrial, 2000);
+    } else {
+      document.getElementById("result").innerText =
+        `✅ Memory done (F:${allScores.forward}, R:${allScores.reverse}).`;
+      startDigitSymbolTest();
+    }
+  };
+
+  function startDigitSymbolTest() {
+    document.getElementById("result").style.display = "none";
+    document.getElementById("instructions").style.display = "none";
+    testState = "digit";
+    document.getElementById("testTitle").innerText = "🔢 Digit Symbol Coding Test";
+    document.getElementById("grid").style.display = "none";
+    document.getElementById("submitBtn").style.display = "none";
+    document.getElementById("digit-symbol").style.display = "block";
+    renderLegend(); nextSymbol(); startTimer();
+  }
+
+  function renderLegend() {
+    const legend = document.getElementById("legend-row");
+    legend.innerHTML = "";
+    digitSymbolLegend.forEach(p => {
+      const box = document.createElement("div");
+      box.className = "legend-box";
+      box.innerHTML = `<div class="legend-symbol">${p.symbol}</div><div class="legend-digit">${p.value}</div>`;
+      legend.appendChild(box);
+    });
+  }
+
+  function nextSymbol() {
+    const rand = digitSymbolLegend[Math.floor(Math.random() * digitSymbolLegend.length)];
+    currentSymbol = rand;
+    document.getElementById("current-symbol").textContent = rand.symbol;
+  }
+
+  document.querySelectorAll(".choice-btn").forEach(btn => {
+    btn.onclick = () => {
+      if (btn.dataset.digit === currentSymbol.value) {
+        allScores.digit++;
+        document.getElementById("digit-score").textContent = allScores.digit;
+      }
+      nextSymbol();
+    };
+  });
+
+  function startTimer() {
+    let timeLeft = 90;
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      document.getElementById("timer").innerText = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        document.querySelectorAll(".choice-btn").forEach(b => b.disabled = true);
+        document.getElementById("time-up-overlay").style.display = "flex";
+        setTimeout(() => {
+          document.getElementById("time-up-overlay").style.display = "none";
+          startTrailMakingATest();
+        }, 2000);
+      }
+    }, 1000);
+  }
+
+  function startTrailMakingATest() {
+    testState = "trailsA";
+    hideAllTests();
+    document.getElementById("testTitle").innerText = "🔵 Trail Making Test A";
+    document.getElementById("trailA-test").style.display = "block";
+
+    const grid = document.getElementById("trailA-grid");
+    grid.innerHTML = "";
+    const pos = getNonOverlappingPositions(grid, 24);
+    let current = 1, startTime = null;
+    for (let i = 1; i <= 24; i++) {
+      const circle = makeCircle(i, pos[i - 1]);
+      circle.onclick = () => {
+        if (i === current) {
+          if (current === 1) startTime = Date.now();
+          markCorrect(circle);
+          current++;
+          if (current > 24) {
+            finalize("trailsA", "trailA-timer", startTime);
+            setTimeout(startTrailMakingBTest, 2000);
+          }
+        } else flashError(circle);
+      };
+      grid.appendChild(circle);
+    }
+  }
+
+  function startTrailMakingBTest() {
+    testState = "trailsB";
+    hideAllTests();
+    document.getElementById("testTitle").innerText = "🔵 Trail Making Test B";
+    document.getElementById("trailB-test").style.display = "block";
+
+    const grid = document.getElementById("trailB-grid");
+    grid.innerHTML = "";
+    const nums = Array.from({ length: 12 }, (_, i) => `${i + 1}`);
+    const lets = Array.from({ length: 12 }, (_, i) => String.fromCharCode(65 + i));
+    const seq = nums.flatMap((n, i) => [n, lets[i]]);
+    const pos = getNonOverlappingPositions(grid, 24);
+    let currentIndex = 0, startTime = null;
+    seq.forEach((label, i) => {
+      const circle = makeCircle(label, pos[i]);
+      circle.onclick = () => {
+        if (label === seq[currentIndex]) {
+          if (currentIndex === 0) startTime = Date.now();
+          markCorrect(circle);
+          currentIndex++;
+          if (currentIndex >= seq.length) {
+            finalize("trailsB", "trailB-timer", startTime);
+            setTimeout(startGrammaticalReasoningTest, 2000);
+          }
+        } else flashError(circle);
+      };
+      grid.appendChild(circle);
+    });
+  }
+
+  function hideAllTests() {
+    ["trailA-test", "trailB-test", "digit-symbol", "grid",
+     "grammatical-reasoning", "progressive-matrices", "instructions"]
+      .forEach(id => document.getElementById(id).style.display = "none");
+  }
+
+  function getNonOverlappingPositions(container, count) {
+    const W = container.clientWidth, H = container.clientHeight;
+    const pos = [];
+    while (pos.length < count) {
+      const x = Math.random() * (W - 60), y = Math.random() * (H - 60);
+      if (pos.every(p => Math.hypot(p.x - x, p.y - y) > 60)) pos.push({ x, y });
+    }
+    return pos;
+  }
+
+  function makeCircle(text, { x, y }) {
+    const d = document.createElement("div");
+    d.className = "trails-circle"; d.textContent = text;
+    d.style.left = `${x}px`; d.style.top = `${y}px`;
+    return d;
+  }
+
+  function markCorrect(el) { el.classList.add("correct"); }
+  function flashError(el) {
+    el.classList.add("trail-error");
+    setTimeout(() => el.classList.remove("trail-error"), 300);
+  }
+
+  function finalize(key, timerId, startTime) {
+    const total = ((Date.now() - startTime) / 1000).toFixed(2);
+    allScores[key] = parseFloat(total);
+    document.getElementById(timerId).textContent = `✅ Completed in ${total} seconds.`;
+  }
+
+  function startGrammaticalReasoningTest() {
+    hideAllTests();
+    document.getElementById("grammatical-reasoning").style.display = "block";
+
+    let correctAnswers = 0, incorrectAnswers = 0, trialsCompleted = 0;
+    const timeLimit = 45;
+    let startTime = Date.now();
+
+    function randomizePositions() {
+      const positions = ["0", "1"];
+      const squarePos = positions[Math.floor(Math.random() * 2)];
+      const trianglePos = squarePos === "0" ? "1" : "0";
+      document.getElementById("square").style.order = squarePos;
+      document.getElementById("triangle").style.order = trianglePos;
+    }
+
+    function generateStatement() {
+      const base = [
+        "The triangle is to the left of the square",
+        "The square is to the left of the triangle",
+        "The triangle is not to the left of the square",
+        "The square is not to the left of the triangle"
+      ];
+      return base[Math.floor(Math.random() * base.length)];
+    }
+
+    function isStatementTrue(stmt) {
+      const sqLeft = document.getElementById("square").style.order === "0";
+      if (stmt.includes("not")) return false;
+      if (stmt.includes("triangle is to the left")) return !sqLeft;
+      if (stmt.includes("square is to the left")) return sqLeft;
+      return false;
+    }
+
+    function showNext() {
+      if (trialsCompleted >= 10) return endTest();
+      randomizePositions();
+      document.getElementById("statement").textContent = generateStatement();
+    }
+
+    function handleAnswer(userAns) {
+      const stmt = document.getElementById("statement").textContent;
+      if (userAns === isStatementTrue(stmt)) correctAnswers++;
+      else incorrectAnswers++;
+      trialsCompleted++;
+      showNext();
+    }
+
+    function updateTimer() {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const rem = timeLimit - elapsed;
+      document.getElementById("timer").textContent = `Time: ${rem}s`;
+      if (rem <= 0) endTest();
+    }
+
+    function endTest() {
+      clearInterval(timer);
+      allScores.grammar = correctAnswers - incorrectAnswers;
+      document.getElementById("score").textContent =
+        `Score: ${allScores.grammar}`;
+      document.getElementById("true-btn").disabled = true;
+      document.getElementById("false-btn").disabled = true;
+      pmTest.start();
+    }
+
+    document.getElementById("true-btn").onclick = () => handleAnswer(true);
+    document.getElementById("false-btn").onclick = () => handleAnswer(false);
+
+    showNext();
+    const timer = setInterval(updateTimer, 1000);
+  }
+
+function showFinalScore() {
+  hideAllTests();
+  document.getElementById("testTitle").innerText = "🎉 All Tests Completed!";
+
+  const finalScoreContainer = document.getElementById("final-score");
+  finalScoreContainer.style.display = "block";
+
+  const TEST_IDS = ["memory-span", "digit-symbol", "trail-making", "grammatical-reasoning", "progressive-matrices"];
+  const scoreList = TEST_IDS.map(testId => {
+    const testElement = document.getElementById(testId);
+    const score = testElement?.dataset.score;
+    const name = testId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return `<li><strong>${name}:</strong> ${score ?? "Not Available"}</li>`;
+  }).join("");
+
+  finalScoreContainer.innerHTML = `
+    <h2>🎉 All Tests Completed!</h2>
+    <ul>${scoreList}</ul>
+  `;
+
+    const summary = `
+      <strong>Memory Span:</strong> Forward ${allScores.forward}, Reverse ${allScores.reverse}<br>
+      <strong>Digit Symbol Coding:</strong> ${allScores.digit}<br>
+      <strong>Trail Making A:</strong> ${allScores.trailsA} seconds<br>
+      <strong>Trail Making B:</strong> ${allScores.trailsB} seconds<br>
+      <strong>Grammatical Reasoning:</strong> ${allScores.grammar}<br>
+      <strong>Progressive Matrices:</strong> ${allScores.matrices}
+    `;
+    document.getElementById("score-summary").innerHTML = summary;
+  }
+
+  class ProgressiveMatricesTest {
+    constructor() {
+      this.maxTrials = 17;
+      this.current = 0;
+      this.score = 0;
+      this.incorrectStreak = 0;
+      this.symbols = ["●", "▲", "■", "◇", "★"];
+      this.gridContainer = document.getElementById("grid-container");
+      this.choicesContainer = document.getElementById("choices-container");
+      this.pmScore = document.getElementById("pm-score");
+      this.pmTrial = document.getElementById("pm-trial");
+      this.messageEl = document.getElementById("message");
+    }
+
+    generateTrialData() {
+      let trials = [];
+      for (let i = 0; i < this.maxTrials; i++) {
+        let grid = {};
+        for (let r = 0; r < 8; r++) {
+          grid[r] = this.symbols[(i + r) % this.symbols.length];
+        }
+        grid[8] = "?";
+        const correct = this.symbols[(i + 8) % this.symbols.length];
+        let choices = [...this.symbols].sort(() => Math.random() - 0.5);
+        if (!choices.includes(correct)) {
+          choices[Math.floor(Math.random() * choices.length)] = correct;
+        }
+        trials.push({ grid, correct, choices });
+      }
+      return trials;
+    }
+
+    display() {
+      const t = this.data[this.current];
+      this.gridContainer.innerHTML = "";
+      for (let i = 0; i < 9; i++) {
+        const v = t.grid[i];
+        this.gridContainer.innerHTML += `<div class="grid-item">${v === "?" ? "" : v}</div>`;
+      }
+      this.choicesContainer.innerHTML = "";
+      t.choices.forEach(sym => {
+        const btn = document.createElement("div");
+        btn.className = "choice";
+        btn.textContent = sym;
+        btn.onclick = () => this.process(sym);
+        this.choicesContainer.appendChild(btn);
+      });
+      this.pmTrial.textContent = `${this.current + 1}/${this.maxTrials}`;
+    }
+
+    process(selection) {
+      const t = this.data[this.current];
+      if (selection === t.correct) {
+        this.score++;
+        this.incorrectStreak = 0;
+      } else {
+        this.incorrectStreak++;
+      }
+      this.pmScore.textContent = this.score;
+      if (this.incorrectStreak >= 3 || this.current === this.maxTrials - 1) {
+        this.messageEl.textContent = `✅ Test Ended! Final Score: ${this.score}`;
+        allScores.matrices = this.score;
+        setTimeout(showFinalScore, 2000);
+      } else {
+        this.current++;
+        this.display();
+      }
+    }
+
+    start() {
+      hideAllTests();
+      document.getElementById("progressive-matrices").style.display = "block";
+      this.current = 0;
+      this.score = 0;
+      this.incorrectStreak = 0;
+      this.data = this.generateTrialData();
+      this.messageEl.textContent = "";
+      this.display();
+    }
+  }
+
+  const pmTest = new ProgressiveMatricesTest();
+
+  document.getElementById("startBtn").onclick = async () => {
+    document.getElementById("startBtn").style.display = "none";
+    phase = "forward"; trial = 1; correctCount = 0;
+    allScores.forward = allScores.reverse = 0;
+    await runTrial();
+  };
+</script>
+</body>
+</html>
