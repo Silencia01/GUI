@@ -96,6 +96,8 @@
   <button onclick="location.reload()">🔄 Retake Tests</button>
 </div>
 </div>
+  <div id="results" style="display:none; padding:1em; border:1px solid #ccc; margin-top:1em;"></div>
+
 
  <script>
   const allScores = { forward: 0, reverse: 0, digit: 0, trailsA: 0, trailsB: 0, grammar: 0, matrices: 0 };
@@ -443,6 +445,20 @@ function showFinalScore() {
     document.getElementById("score-summary").innerHTML = summary;
   }
 
+  function showBasicResults() {
+  const r = document.getElementById("results");
+  r.innerText =
+    `Forward: ${allScores.forward}, ` +
+    `Reverse: ${allScores.reverse}, ` +
+    `Digit: ${allScores.digit}, ` +
+    `Trail A: ${allScores.trailsA}s, ` +
+    `Trail B: ${allScores.trailsB}s, ` +
+    `Grammar: ${allScores.grammar}, ` +
+    `Matrices: ${allScores.matrices}`;
+  r.style.display = "block";
+}
+
+
   class ProgressiveMatricesTest {
     constructor() {
       this.maxTrials = 17;
@@ -505,7 +521,7 @@ function showFinalScore() {
       if (this.incorrectStreak >= 3 || this.current === this.maxTrials - 1) {
         this.messageEl.textContent = `✅ Test Ended! Final Score: ${this.score}`;
         allScores.matrices = this.score;
-        setTimeout(showFinalScore, 2000);
+        setTimeout(showBasicResults, 500);
       } else {
         this.current++;
         this.display();
