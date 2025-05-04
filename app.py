@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS  # Import flask-cors
+from flask_cors import CORS
 import random
 import torch
 import joblib
@@ -8,8 +8,8 @@ from torch import nn
 
 app = Flask(__name__)
 
-# Enable CORS for all routes
-CORS(app)  # This will allow all domains to access your API
+# Enable CORS for the /submit endpoint (adjust origins as needed)
+CORS(app, resources={r"/submit": {"origins": "*"}})
 
 # --- Define your model ---
 class BinaryMLP(nn.Module):
@@ -27,13 +27,25 @@ class BinaryMLP(nn.Module):
         x = self.dropout(self.shared2(x))
         return self.output(x)
 
-# --- Load model and scaler ---
+# --- Load model, scaler, and thresholds ---
 INPUT_DIM = 10
 model = BinaryMLP(INPUT_DIM)
 model.load_state_dict(torch.load("model.pth", map_location="cpu"))
 model.eval()
 
 scaler = joblib.load("scaler.pkl")
+percentile_thresholds = joblib.load("percentile_thresholds.pkl")
+
+# Helper to map a raw score to a percentile category
+def map_to_percentile(score, thresholds):
+    p10 = thresholds.get("p10", 0)
+    p90 = thresholds.get("p90", 100)
+    if score <= p10:
+        return 0  # Low
+    elif score <= p90:
+        return 1  # Average
+    else:
+        return 2  # High
 
 @app.route("/")
 def index():
@@ -62,22 +74,23 @@ def digit_symbol():
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.json
-    age = data["age"]
-    gender = data["gender"]
-    education = data["education"]
-    memory_score = data["memory_score"]
-    executive = data.get("executive_score", 50.0)
-    reasoning = data.get("reasoning_score", 50.0)
+    age = data.get("age")
+    gender = data.get("gender")
+    education = data.get("education")
+    memory_score = data.get("memory_score")
+    executive_score = data.get("executive_score", 50.0)
+    reasoning_score = data.get("reasoning_score", 50.0)
 
     pct_map = {"Low": 0, "Average": 1, "High": 2}
-    memory_pct = pct_map.get(data.get("memory_percentile", "Average"), 1)
-    executive_pct = pct_map.get(data.get("executive_percentile", "Average"), 1)
-    reasoning_pct = pct_map.get(data.get("reasoning_percentile", "Average"), 1)
+    memory_pct = pct_map.get(data.get("memory_percentile"), 1)
+    executive_pct = pct_map.get(data.get("executive_percentile"), 1)
+    reasoning_pct = pct_map.get(data.get("reasoning_percentile"), 1)
 
     gender_male = 1 if gender == "Male" else 0
     gender_female = 1 - gender_male
 
-    raw_input = np.array([[age, memory_score, executive, reasoning, gender_female, gender_male, education]])
+    raw_input = np.array([[age, memory_score, executive_score, reasoning_score,
+                           gender_female, gender_male, education]])
     scaled_input = scaler.transform(raw_input)
     final_input = np.concatenate([scaled_input, [[memory_pct, executive_pct, reasoning_pct]]], axis=1)
     input_tensor = torch.tensor(final_input, dtype=torch.float32)
@@ -93,41 +106,51 @@ def predict():
 def submit():
     data = request.get_json()
 
+    # Debug print
+    print("Loaded percentile_thresholds keys:", list(percentile_thresholds.keys()))
+    print("Full percentile_thresholds:", percentile_thresholds)
+
     # Extract participant info
     participant = data.get("participant", {})
     scores = data.get("scores", {})
 
-    age = int(participant.get("age", 30))  # Ensure it's an integer
-    gender = participant.get("gender", "Female")  # Default to Female
-    education = participant.get("education", "high_school")  # Default to "high_school"
+    age = int(participant.get("age", 30))
+    gender = participant.get("gender", "Female")
+    education = participant.get("education", "high_school")
 
-    # Map gender and education
+    # One-hot encode gender
     gender_male = 1 if gender == "Male" else 0
     gender_female = 1 - gender_male
 
-    # Education mapping
-    education_map = {"high_school": 0, "undergraduate": 1, "postgraduate": 2}
-    education_level = education_map.get(education, 0)  # Default to "high_school"
+    # Education encoding
+    education_map = {"high_school": 0, "undergrad": 1, "postgrad": 2}
+    education_level = education_map.get(education, 0)
 
-    # Extract actual scores from completed tests
-    memory_score = scores.get("Memory Span", 0)
-    executive_score = scores.get("Trail Making", 0)
-    reasoning_score = scores.get("Grammatical Reasoning", 0)
+    # Extract cognitive scores
+    memory_score = scores.get("memory_score", 0)
+    executive_score = scores.get("executive_score", 0)
+    reasoning_score = scores.get("reasoning_score", 0)
 
-    # Percentile approximations
-    pct_map = {"Low": 0, "Average": 1, "High": 2}
-    memory_pct = 1  # Default to "Average"
-    executive_pct = 1
-    reasoning_pct = 1
+    # Safely get thresholds or fallback defaults
+    mem_thr = percentile_thresholds.get("memory_score",
+                                       percentile_thresholds.get("memory", {"p10": 33, "p90": 66}))
+    exec_thr = percentile_thresholds.get("executive_score",
+                                        percentile_thresholds.get("executive", {"p10": 33, "p90": 66}))
+    reas_thr = percentile_thresholds.get("reasoning_score",
+                                        percentile_thresholds.get("reasoning", {"p10": 33, "p90": 66}))
 
-    # Prepare the input for the model
+    memory_pct = map_to_percentile(memory_score, mem_thr)
+    executive_pct = map_to_percentile(executive_score, exec_thr)
+    reasoning_pct = map_to_percentile(reasoning_score, reas_thr)
+
+    # Prepare model input
     raw_input = np.array([[age, memory_score, executive_score, reasoning_score,
                            gender_female, gender_male, education_level]])
     scaled_input = scaler.transform(raw_input)
     final_input = np.concatenate([scaled_input, [[memory_pct, executive_pct, reasoning_pct]]], axis=1)
     input_tensor = torch.tensor(final_input, dtype=torch.float32)
 
-    # Run the prediction
+    # Run prediction
     with torch.no_grad():
         output = model(input_tensor).squeeze()
         prob = torch.sigmoid(output).item()
