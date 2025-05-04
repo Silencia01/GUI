@@ -1,10 +1,20 @@
 /* General Page Styling */
+* {
+  box-sizing: border-box;
+}
+
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #f5f5f5;
-    margin: 0;
-    padding: 40px;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+}
+
+.content {
+  padding: 40px;
+  text-align: center;
 }
 
 h1 {
@@ -69,6 +79,11 @@ button:disabled {
 
 button:hover:not(:disabled) {
     background-color: #0056b3;
+}
+
+button:focus {
+    outline: 3px solid #0056b3;
+    outline-offset: 2px;
 }
 
 /* Digit Symbol Coding Test Styles */
@@ -163,7 +178,7 @@ button:hover:not(:disabled) {
     background-color: #eef5ff;
     border: 2px solid #007bff;
     border-radius: 10px;
-    overflow: hidden; /* Ensure circles don't overflow outside the container */
+    overflow: hidden;
 }
 
 .trails-circle {
@@ -180,7 +195,7 @@ button:hover:not(:disabled) {
     cursor: pointer;
     font-size: 18px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    z-index: 10; /* Ensure the circles are on top of other elements */
+    z-index: 10;
 }
 
 /* Trail Completion Message */
@@ -212,7 +227,7 @@ button:hover:not(:disabled) {
     background-color: #fff6e6;
     border: 2px solid #ff9800;
     border-radius: 10px;
-    overflow: hidden; /* Ensure circles don't overflow outside the container */
+    overflow: hidden;
 }
 
 /* Time's Up Overlay */
@@ -222,11 +237,11 @@ button:hover:not(:disabled) {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent dark background */
-    display: none; /* Hidden by default */
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
     justify-content: center;
     align-items: center;
-    z-index: 9999; /* Sit on top of all other elements */
+    z-index: 9999;
 }
 
 #time-up-box {
@@ -240,127 +255,195 @@ button:hover:not(:disabled) {
 }
 
 /* both grids get the same styling */
-    .trail-grid {
-      position: relative;
-      width: 600px;
-      height: 400px;
-      border: 1px solid #ccc;
-      margin: 20px auto;
-    }
-    .trails-circle {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      line-height: 40px;
-      text-align: center;
-      border-radius: 20px;
-      background-color: #2196f3;
-      color: #fff;
-      cursor: pointer;
-      user-select: none;
-    }
-    .trail-error { background-color: #f44336 !important; }
-    .correct     { background-color: #4caf50 !important; }
-    .trail-complete-message {
-      font-weight: bold;
-      color: #4caf50;
-      text-align: center;
-    }
+.trail-grid {
+  position: relative;
+  width: 600px;
+  height: 400px;
+  border: 1px solid #ccc;
+  margin: 20px auto;
+}
 
-    /* Grammatical Reasoning Test Styling */
-    #grammatical-reasoning {
-      display: none;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f4f4f9;
-      padding: 20px;
-      margin-top: 20px;
-    }
-    .test-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 20px 0;
-    }
-    .shape {
-      font-size: 100px;
-      margin: 0 20px;
-      color: blue;
-    }
-    .statement {
-      font-size: 20px;
-      margin-top: 20px;
-    }
-    .button-container {
-      margin-top: 30px;
-    }
-    .button-container button {
-      font-size: 20px;
-      padding: 10px 20px;
-      margin: 10px;
-      cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-    .button-container button:hover {
-      background-color: #45a049;
-    }
-    .timer {
-      font-size: 18px;
-      margin-top: 20px;
-    }
-    .score {
-      font-size: 22px;
-      margin-top: 30px;
-      font-weight: bold;
-    }
+.trails-circle {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  border-radius: 20px;
+  background-color: #2196f3;
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+}
 
-    /* Progressive Matrices Test Styling */
-    #progressive-matrices {
-      display: none;
-      font-family: Arial, sans-serif;
-      background-color: white;
-      padding: 20px;
-      margin: 20px auto;
-      max-width: 600px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    #progressive-matrices p {
-      font-size: 16px;
-      margin-bottom: 15px;
-    }
-    #grid-container {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .grid-item {
-      border: 2px solid #ccc;
-      padding: 20px;
-      font-size: 24px;
-    }
-    #choices-container {
-      display: flex;
-      justify-content: space-around;
-      margin-bottom: 20px;
-    }
-    .choice {
-      padding: 10px 20px;
-      border: 2px solid #ccc;
-      cursor: pointer;
-      font-size: 24px;
-      user-select: none;
-    }
-    .choice:hover {
-      background-color: #f0f0f0;
-    }
-    #message {
-      color: green;
-      font-weight: bold;
-      text-align: center;
-      margin-top: 20px;
-    }
+.trail-error { background-color: #f44336 !important; }
+.correct     { background-color: #4caf50 !important; }
+
+.trail-complete-message {
+  font-weight: bold;
+  color: #4caf50;
+  text-align: center;
+}
+
+/* Grammatical Reasoning Test Styling */
+#grammatical-reasoning {
+  display: none;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background-color: #f4f4f9;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.test-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.shape {
+  font-size: 100px;
+  margin: 0 20px;
+  color: blue;
+}
+
+.statement {
+  font-size: 20px;
+  margin-top: 20px;
+}
+
+.button-container {
+  margin-top: 30px;
+}
+
+.button-container button {
+  font-size: 20px;
+  padding: 10px 20px;
+  margin: 10px;
+  cursor: pointer;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.button-container button:hover {
+  background-color: #45a049;
+}
+
+.timer {
+  font-size: 18px;
+  margin-top: 20px;
+}
+
+.score {
+  font-size: 22px;
+  margin-top: 30px;
+  font-weight: bold;
+}
+
+/* Progressive Matrices Test Styling */
+#progressive-matrices {
+  display: none;
+  font-family: Arial, sans-serif;
+  background-color: white;
+  padding: 20px;
+  margin: auto;
+  width: 80vmin;
+  height: 80vmin;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  text-align: center;
+  border-radius: 10px;
+}
+
+#progressive-matrices p {
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+#grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);  /* 3 columns */
+  grid-template-rows: repeat(3, 1fr);     /* 3 rows to make it a 3x3 grid */
+  gap: 10px;
+  margin-bottom: 20px;
+  height: 60%;
+}
+
+.grid-item {
+  border: 2px solid #ccc;
+  padding: 10px;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+#choices-container {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.choice {
+  padding: 10px 20px;
+  border: 2px solid #ccc;
+  cursor: pointer;
+  font-size: 18px;
+  user-select: none;
+}
+
+.choice:hover {
+  background-color: #f0f0f0;
+}
+
+#message {
+  color: green;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+}
+
+#user-info-modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+#user-info-form {
+  background: white;
+  width: 90%;
+  max-width: 600px;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-sizing: border-box;
+}
+
+/* Error message styling & centering */
+.error-message {
+  display: none;
+  color: #b00020;
+  background-color: #ffe6e6;
+  padding: 0.75em 1em;
+  margin: 1em auto;
+  border: 1px solid #f5c2c7;
+  border-radius: 5px;
+  max-width: 80%;
+  text-align: center;
+}

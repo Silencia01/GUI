@@ -10,97 +10,294 @@
   </style>
 </head>
 <body>
-  <h1 id="testTitle">🧠 Forward and Reverse Memory Span Test</h1>
-  <p id="instructions">
-    This is a training test for spatial and visual memory capacity.
-    Follow the sequence of blocks (💃), and repeat them in the forward or reverse order.
-  </p>
+  <!-- ─────── Main Page Content ─────── -->
+  <div class="content">
+    <h1 id="testTitle">🧠 Forward and Reverse Memory Span Test</h1>
+    <p id="instructions">
+      This is a training test for spatial and visual memory capacity.
+      Follow the sequence of blocks (💃), and repeat them in the forward or reverse order.
+    </p>
 
-  <!-- Memory Span -->
-  <div id="grid"></div>
+    <!-- Memory Span -->
+    <div id="grid"></div>
 
-  <!-- Digit Symbol Coding Test -->
-  <div id="digit-symbol" style="display:none">
-    <p>Match the symbol shown above to its correct digit (1–3) using the legend below.</p>
-    <div id="current-symbol" class="symbol-display"></div>
-    <div id="legend-row" class="legend-container"></div>
-    <div class="button-row">
-      <button class="choice-btn" data-digit="1">1</button>
-      <button class="choice-btn" data-digit="2">2</button>
-      <button class="choice-btn" data-digit="3">3</button>
+    <!-- Digit Symbol Coding Test -->
+    <div id="digit-symbol" style="display:none">
+      <p id="instructions">
+      Match the symbol shown above to its correct digit (1–3) using the legend below.
+      </p>
+      <div id="current-symbol" class="symbol-display"></div>
+      <div id="legend-row" class="legend-container"></div>
+      <div class="button-row">
+        <button class="choice-btn" data-digit="1">1</button>
+        <button class="choice-btn" data-digit="2">2</button>
+        <button class="choice-btn" data-digit="3">3</button>
+      </div>
+      <div class="status">
+        <p>Time left: <span id="timer">90</span> seconds</p>
+        <p>Score: <span id="digit-score">0</span></p>
+      </div>
     </div>
-    <div class="status">
-      <p>Time left: <span id="timer">90</span> seconds</p>
-      <p>Score: <span id="digit-score">0</span></p>
+
+    <!-- Trail Making Test A -->
+    <div id="trailA-test" style="display:none">
+      <p id="instructions">
+      Click numbers from 1 to 24 in order as fast as you can.
+        Timer starts on first click.
+      </p>
+      <div id="trailA-grid" class="trail-grid"></div>
+      <p id="trailA-timer"></p>
     </div>
-  </div>
 
-  <!-- Trail Making Test A -->
-  <div id="trailA-test" style="display:none">
-    <h2>🔵 Trail Making Test – Part A</h2>
-    <p>Click numbers from 1 to 24 in order as fast as you can. Timer starts on first click.</p>
-    <div id="trailA-grid" class="trail-grid"></div>
-    <p id="trailA-timer"></p>
-  </div>
-
-  <!-- Trail Making Test B -->
-  <div id="trailB-test" style="display:none">
-    <h2>🔵 Trail Making Test – Part B</h2>
-    <p>Click alternating numbers and letters (1-A-2-B…) as fast as you can. Timer starts on first click.</p>
-    <div id="trailB-grid" class="trail-grid"></div>
-    <p id="trailB-timer"></p>
-  </div>
-
-  <!-- Grammatical Reasoning Test -->
-  <div id="grammatical-reasoning">
-    <h2>Grammatical Reasoning Test</h2>
-    <div id="instruction" class="statement">Is the following statement true or false?</div>
-    <div class="test-container">
-      <div id="square" class="shape">□</div>
-      <div id="triangle" class="shape">△</div>
+    <!-- Trail Making Test B -->
+    <div id="trailB-test" style="display:none">
+      <p id="instructions">
+      Click alternating numbers and letters (1-A-2-B…) as fast as you can.
+        Timer starts on first click.
+      </p>
+      <div id="trailB-grid" class="trail-grid"></div>
+      <p id="trailB-timer"></p>
     </div>
-    <div id="statement" class="statement"></div>
-    <div class="button-container">
-      <button id="true-btn">True</button>
-      <button id="false-btn">False</button>
+
+    <!-- Grammatical Reasoning Test -->
+    <div id="grammatical" style="display:none">
+      <div id="instruction" class="statement">Is the following statement true or false?</div>
+      <div class="test-container">
+        <div id="square" class="shape">□</div>
+        <div id="triangle" class="shape">△</div>
+      </div>
+      <div id="statement" class="statement"></div>
+      <div class="button-container">
+        <button id="true-btn">True</button>
+        <button id="false-btn">False</button>
+      </div>
+      <div id="timer" class="timer">Time: 45s</div>
+      <div id="score" class="score"></div>
     </div>
-    <div id="timer" class="timer">Time: 45s</div>
-    <div id="score" class="score"></div>
-  </div>
 
-  <!-- Progressive Matrices Test -->
-  <div id="progressive-matrices">
-    <h1>Progressive Matrices Test</h1>
-    <p>In this test, you'll see a 3×3 pattern with one missing piece (bottom right). Click the shape below that completes the pattern.</p>
-    <div id="grid-container"></div>
-    <div id="choices-container"></div>
-    <div id="score-container">
-      Score: <span id="pm-score">0</span><br>
-      Trial: <span id="pm-trial">1/17</span>
+    <!-- Progressive Matrices Test -->
+    <div id="progressive" style="display:none">
+      <p id="instructions">
+      In this test, you'll see a 3×3 pattern with one missing piece (bottom right).
+        Click the shape below that completes the pattern.
+      </p>
+      <div id="grid-container"></div>
+      <div id="choices-container"></div>
+      <div id="score-container">
+        Score: <span id="pm-score">0</span><br>
+        Trial: <span id="pm-trial">1/17</span>
+      </div>
+      <div id="message"></div>
     </div>
-    <div id="message"></div>
+
+    <!-- Control Buttons & Results -->
+    <button id="startBtn">Start Test</button>
+    <button id="submitBtn" disabled>Submit</button>
+    <p id="result"></p>
+
+    <!-- Overlays & Final Results -->
+    <div id="time-up-overlay" style="display: none;">
+      <div id="time-up-box">✅ Time's up!</div>
+    </div>
+
+
+<div id="final-results" style="display: none; padding: 2em; text-align: center;">
+
+  <h2>👤 Participant Information</h2>
+  <p>Gender: <span id="user-gender"></span></p>
+  <p>Age: <span id="user-age"></span></p>
+  <p>Education: <span id="user-education"></span></p>
+
+  <h2>Test Scores</h2>
+  <ul id="final-scores-list" style="list-style: none; padding: 0;">
+    <li>Memory Span (Forward): <span id="final-forward-score"></span></li>
+    <li>Memory Span (Reverse): <span id="final-reverse-score"></span></li>
+    <li>Digit Symbol Coding: <span id="final-digit-score"></span></li>
+    <li>Trail Making A: <span id="final-trailsA-score"></span></li>
+    <li>Trail Making B: <span id="final-trailsB-score"></span></li>
+    <li>Grammatical Reasoning: <span id="final-grammar-score"></span></li>
+    <li>Progressive Matrices: <span id="final-matrices-score"></span></li>
+  </ul>
+
+  <h3>ML Model Output</h3>
+  <div id="model-results" style="display: none;">
+    <p id="predictionResult"></p>
+    <p id="probabilityResult"></p>
   </div>
 
-  <button id="startBtn">Start Test</button>
-  <button id="submitBtn" disabled>Submit</button>
-  <p id="result"></p>
-
-  <div id="time-up-overlay" style="display: none;">
-  <div id="time-up-box">
-    ✅ Time's up!
-  </div>
-
-<div id="final-score" style="display:none;">
-  <h2>🧠 Final Results</h2>
-  <p id="score-summary"></p>
-  <button onclick="location.reload()">🔄 Retake Tests</button>
+  <button id="submit-data" onclick="submitAllData()">Submit All Data</button>
 </div>
-</div>
-  <div id="results" style="display:none; padding:1em; border:1px solid #ccc; margin-top:1em;"></div>
 
 
- <script>
-  const allScores = { forward: 0, reverse: 0, digit: 0, trailsA: 0, trailsB: 0, grammar: 0, matrices: 0 };
+<!-- Results container-->
+<div id="results" style="display:none; padding:1em; border:1px solid #ccc; margin-top:1em;"></div>
+
+  <!-- Participant Info Modal-->
+  <div id="user-info-modal">
+    <div id="user-info-form">
+      <h2>👤 Participant Information</h2>
+
+      <label>Gender:
+        <select id="gender">
+          <option value="">Select</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </label><br><br>
+
+      <label>Age:
+        <input type="number" id="age" min="10" max="120" required>
+      </label><br><br>
+
+      <label>Education Level:
+        <select id="education">
+          <option value="">Select</option>
+          <option value="high_school">High School</option>
+          <option value="undergrad">Undergraduate</option>
+          <option value="postgrad">Postgraduate</option>
+        </select>
+      </label><br><br>
+
+       <div id="user-info-error" class="error-message" style="display:none; color: red;"></div> <!-- Error message box -->
+
+      <button id="userInfoSubmitBtn">Start</button>
+    </div>
+
+
+  </div>
+</body>
+<script>
+const allScores = { forward: 0, reverse: 0, digit: 0, trailsA: 0, trailsB: 0, grammar: 0, matrices: 0 };
+
+window.onload = function() {
+  document.getElementById("user-info-error").style.display = "none";
+};
+
+// lobal state variable
+let userInfo = {
+  gender: '',
+  age: '',
+  education: ''
+};
+
+document.getElementById("userInfoSubmitBtn").addEventListener("click", function() {
+  // Clear previous error messages
+  const errorBox = document.getElementById("user-info-error");
+  errorBox.textContent = ''; // Clear any previous error message
+  errorBox.style.display = "none"; // Hide error box before validation
+
+  // Collect form data
+  let gender = document.getElementById("gender").value;
+  let age = parseInt(document.getElementById("age").value); // Make sure it's a number
+  let education = document.getElementById("education").value;
+
+  // Validate all fields
+  if (!gender || !age || !education) {
+    errorBox.textContent = "Please fill out all fields before continuing.";
+    errorBox.style.display = "block"; // Show the error message
+    return;
+  }
+
+  // Validate age range
+  if (isNaN(age) || age < 10 || age > 120) {
+    errorBox.textContent = "Please enter a valid age between 10 and 120.";
+    errorBox.style.display = "block"; // Show the error message
+    return;
+  }
+
+  // Save to userInfo variable
+  userInfo.gender = gender;
+  userInfo.age = age;
+  userInfo.education = education;
+
+  // Hide the user info form modal after validation
+  document.getElementById("user-info-modal").style.display = "none";
+
+  // Show the Memory Span test
+  document.getElementById("memory-span-test").style.display = "block";
+
+  console.log("User info saved:", userInfo);
+});
+
+function showFinalResults(participantData, scores, prediction, probability) {
+  // Hide any test UIs
+  hideAllTests();
+
+
+  document.getElementById("testTitle").innerText = "🌟 All Tests Completed";
+
+
+  document.getElementById("user-gender").textContent    = participantData.gender;
+  document.getElementById("user-age").textContent       = participantData.age;
+  document.getElementById("user-education").textContent = participantData.education;
+
+  // Populate each test score into its unique final-results span
+  document.getElementById("final-forward-score").textContent   = scores.forward;
+  document.getElementById("final-reverse-score").textContent   = scores.reverse;
+  document.getElementById("final-digit-score").textContent     = scores.digit;
+  document.getElementById("final-trailsA-score").textContent   = scores.trailsA;
+  document.getElementById("final-trailsB-score").textContent   = scores.trailsB;
+  document.getElementById("final-grammar-score").textContent   = scores.grammar;
+  document.getElementById("final-matrices-score").textContent  = scores.matrices;
+
+  // Populate the model’s prediction and probability
+  document.getElementById("predictionResult").textContent  =
+    `Prediction: ${prediction === 1 ? 'Positive' : 'Negative'}`;
+  document.getElementById("probabilityResult").textContent =
+    `Probability: ${(probability * 100).toFixed(2)}%`;
+
+
+  const finalResults = document.getElementById("final-results");
+  finalResults.style.display = "block";
+  finalResults.classList.add("fade-in");
+
+  const modelResults = document.getElementById("model-results");
+  modelResults.style.display = "block";
+  modelResults.classList.add("fade-in");
+}
+
+
+// Submit Function
+function submitAllData() {
+  const data = {
+    participant: userInfo,  // Use userInfo here instead of participantData
+    scores: allScores
+  };
+
+  // Send the data to the backend
+  fetch('http://localhost:5000/submit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Log the response data to verify it's correct
+    console.log("Data submitted successfully:", data);
+
+    // Check if the response contains prediction and probability
+    if (data.prediction !== undefined && data.probability !== undefined) {
+      // Pass the prediction and probability to showFinalResults
+      showFinalResults(userInfo, allScores, data.prediction, data.probability);
+    } else {
+      alert("Unexpected response format. Please check the backend.");
+    }
+
+    // Alert the user that the data was submitted successfully
+    alert("Data submitted successfully!");
+  })
+  .catch(error => {
+    console.error("Error submitting data:", error);
+    alert("Error submitting data. Please try again.");
+  });
+}
+
+
+
+
+
   let span = 5, trial = 1, maxTrials = 3, correctCount = 0;
   let phase = "forward", testState = "memory";
   let sequence = [], userSequence = [], timerInterval, currentSymbol = null;
@@ -309,7 +506,7 @@
 
   function hideAllTests() {
     ["trailA-test", "trailB-test", "digit-symbol", "grid",
-     "grammatical-reasoning", "progressive-matrices", "instructions"]
+     "grammatical", "progressive", "instructions"]
       .forEach(id => document.getElementById(id).style.display = "none");
   }
 
@@ -342,108 +539,94 @@
     document.getElementById(timerId).textContent = `✅ Completed in ${total} seconds.`;
   }
 
-  function startGrammaticalReasoningTest() {
-    hideAllTests();
-    document.getElementById("grammatical-reasoning").style.display = "block";
-
-    let correctAnswers = 0, incorrectAnswers = 0, trialsCompleted = 0;
-    const timeLimit = 45;
-    let startTime = Date.now();
-
-    function randomizePositions() {
-      const positions = ["0", "1"];
-      const squarePos = positions[Math.floor(Math.random() * 2)];
-      const trianglePos = squarePos === "0" ? "1" : "0";
-      document.getElementById("square").style.order = squarePos;
-      document.getElementById("triangle").style.order = trianglePos;
-    }
-
-    function generateStatement() {
-      const base = [
-        "The triangle is to the left of the square",
-        "The square is to the left of the triangle",
-        "The triangle is not to the left of the square",
-        "The square is not to the left of the triangle"
-      ];
-      return base[Math.floor(Math.random() * base.length)];
-    }
-
-    function isStatementTrue(stmt) {
-      const sqLeft = document.getElementById("square").style.order === "0";
-      if (stmt.includes("not")) return false;
-      if (stmt.includes("triangle is to the left")) return !sqLeft;
-      if (stmt.includes("square is to the left")) return sqLeft;
-      return false;
-    }
-
-    function showNext() {
-      if (trialsCompleted >= 10) return endTest();
-      randomizePositions();
-      document.getElementById("statement").textContent = generateStatement();
-    }
-
-    function handleAnswer(userAns) {
-      const stmt = document.getElementById("statement").textContent;
-      if (userAns === isStatementTrue(stmt)) correctAnswers++;
-      else incorrectAnswers++;
-      trialsCompleted++;
-      showNext();
-    }
-
-    function updateTimer() {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const rem = timeLimit - elapsed;
-      document.getElementById("timer").textContent = `Time: ${rem}s`;
-      if (rem <= 0) endTest();
-    }
-
-    function endTest() {
-      clearInterval(timer);
-      allScores.grammar = correctAnswers - incorrectAnswers;
-      document.getElementById("score").textContent =
-        `Score: ${allScores.grammar}`;
-      document.getElementById("true-btn").disabled = true;
-      document.getElementById("false-btn").disabled = true;
-      pmTest.start();
-    }
-
-    document.getElementById("true-btn").onclick = () => handleAnswer(true);
-    document.getElementById("false-btn").onclick = () => handleAnswer(false);
-
-    showNext();
-    const timer = setInterval(updateTimer, 1000);
-  }
-
-function showFinalScore() {
+ function startGrammaticalReasoningTest() {
   hideAllTests();
-  document.getElementById("testTitle").innerText = "🎉 All Tests Completed!";
+  document.getElementById("grammatical").style.display = "block";
+  document.getElementById("testTitle").innerText = "🗯️ Grammatical Reasoning Test";
 
-  const finalScoreContainer = document.getElementById("final-score");
-  finalScoreContainer.style.display = "block";
+  let correctAnswers = 0, incorrectAnswers = 0, trialsCompleted = 0;
+  const timeLimit = 45;
+  let startTime = Date.now();
 
-  const TEST_IDS = ["memory-span", "digit-symbol", "trail-making", "grammatical-reasoning", "progressive-matrices"];
-  const scoreList = TEST_IDS.map(testId => {
-    const testElement = document.getElementById(testId);
-    const score = testElement?.dataset.score;
-    const name = testId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    return `<li><strong>${name}:</strong> ${score ?? "Not Available"}</li>`;
-  }).join("");
-
-  finalScoreContainer.innerHTML = `
-    <h2>🎉 All Tests Completed!</h2>
-    <ul>${scoreList}</ul>
-  `;
-
-    const summary = `
-      <strong>Memory Span:</strong> Forward ${allScores.forward}, Reverse ${allScores.reverse}<br>
-      <strong>Digit Symbol Coding:</strong> ${allScores.digit}<br>
-      <strong>Trail Making A:</strong> ${allScores.trailsA} seconds<br>
-      <strong>Trail Making B:</strong> ${allScores.trailsB} seconds<br>
-      <strong>Grammatical Reasoning:</strong> ${allScores.grammar}<br>
-      <strong>Progressive Matrices:</strong> ${allScores.matrices}
-    `;
-    document.getElementById("score-summary").innerHTML = summary;
+  // Function to randomize the position of square and triangle
+  function randomizePositions() {
+    const positions = ["0", "1"];
+    const squarePos = positions[Math.floor(Math.random() * 2)];
+    const trianglePos = squarePos === "0" ? "1" : "0";
+    document.getElementById("square").style.order = squarePos;
+    document.getElementById("triangle").style.order = trianglePos;
   }
+
+  // Function to generate random statements
+  function generateStatement() {
+    const base = [
+      "The triangle is to the left of the square",
+      "The square is to the left of the triangle",
+      "The triangle is not to the left of the square",
+      "The square is not to the left of the triangle"
+    ];
+    return base[Math.floor(Math.random() * base.length)];
+  }
+
+  // Function to check if the statement is true or false
+  function isStatementTrue(stmt) {
+    const sqLeft = document.getElementById("square").style.order === "0";
+    if (stmt.includes("not")) return false;
+    if (stmt.includes("triangle is to the left")) return !sqLeft;
+    if (stmt.includes("square is to the left")) return sqLeft;
+    return false;
+  }
+
+  // Function to show the next statement
+  function showNext() {
+    if (trialsCompleted >= 10) return endTest();
+    randomizePositions();
+    document.getElementById("statement").textContent = generateStatement();
+
+    // Make the statement text bold
+    document.getElementById("statement").style.fontWeight = "bold";
+  }
+
+  // Function to handle the user's answer
+  function handleAnswer(userAns) {
+    const stmt = document.getElementById("statement").textContent;
+    if (userAns === isStatementTrue(stmt)) correctAnswers++;
+    else incorrectAnswers++;
+    trialsCompleted++;
+    showNext();
+  }
+
+  // Function to update the timer
+  function updateTimer() {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const rem = timeLimit - elapsed;
+    document.getElementById("timer").textContent = `Time: ${rem}s`;
+    if (rem <= 0) endTest();
+  }
+
+  // Function to end the test
+  function endTest() {
+    clearInterval(timer);
+    allScores.grammar = correctAnswers - incorrectAnswers;
+    document.getElementById("score").textContent = `Score: ${allScores.grammar}`;
+    document.getElementById("true-btn").disabled = true;
+    document.getElementById("false-btn").disabled = true;
+    pmTest.start(); // Start the Progressive Matrices Test
+    document.getElementById("testTitle").innerText = "🔍 Progressive Matrices Test";
+  }
+
+  // Event listeners for the answer buttons
+  document.getElementById("true-btn").onclick = () => handleAnswer(true);
+  document.getElementById("false-btn").onclick = () => handleAnswer(false);
+
+  // Start the first trial
+  showNext();
+
+  // Start the timer
+  const timer = setInterval(updateTimer, 1000);
+}
+
+
 
   function showBasicResults() {
   const r = document.getElementById("results");
@@ -520,8 +703,9 @@ function showFinalScore() {
       this.pmScore.textContent = this.score;
       if (this.incorrectStreak >= 3 || this.current === this.maxTrials - 1) {
         this.messageEl.textContent = `✅ Test Ended! Final Score: ${this.score}`;
+        hideAllTests();
         allScores.matrices = this.score;
-        setTimeout(showBasicResults, 500);
+      setTimeout(() => showFinalResults(userInfo, allScores), 500);
       } else {
         this.current++;
         this.display();
@@ -530,7 +714,7 @@ function showFinalScore() {
 
     start() {
       hideAllTests();
-      document.getElementById("progressive-matrices").style.display = "block";
+      document.getElementById("progressive").style.display = "block";
       this.current = 0;
       this.score = 0;
       this.incorrectStreak = 0;
@@ -549,5 +733,4 @@ function showFinalScore() {
     await runTrial();
   };
 </script>
-</body>
 </html>
