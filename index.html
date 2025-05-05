@@ -108,7 +108,7 @@
   <p>Age: <span id="user-age"></span></p>
   <p>Education: <span id="user-education"></span></p>
 
-  <h2>Test Scores</h2>
+  <h2>🧠 Test Scores</h2>
   <ul id="final-scores-list" style="list-style: none; padding: 0;">
     <li>Memory Span (Forward): <span id="final-forward-score"></span></li>
     <li>Memory Span (Reverse): <span id="final-reverse-score"></span></li>
@@ -119,14 +119,24 @@
     <li>Progressive Matrices: <span id="final-matrices-score"></span></li>
   </ul>
 
-  <h3>ML Model Output</h3>
+  <h3>🧠 ML Model Output</h3>
   <div id="model-results" style="display: none;">
     <p id="predictionResult"></p>
     <p id="probabilityResult"></p>
   </div>
 
-  <button id="submit-data" onclick="submitAllData()">Submit All Data</button>
+  <h3>📊 Cognitive Domain Percentiles</h3>
+  <div id="percentile-results" style="display: none; margin-top: 1.5em;">
+    <p><strong>Memory:</strong> <span id="memory-percentile"></span></p>
+    <p><strong>Executive:</strong> <span id="executive-percentile"></span></p>
+    <p><strong>Reasoning:</strong> <span id="reasoning-percentile"></span></p>
+  </div>
+
+    <button id="submit-data" onclick="submitAllData()">Submit All Data</button>
+
 </div>
+
+
 
 
 <!-- Results container-->
@@ -219,50 +229,59 @@ document.getElementById("userInfoSubmitBtn").addEventListener("click", function(
   console.log("User info saved:", userInfo);
 });
 
-function showFinalResults(participantData, scores, prediction, probability) {
-  // Hide any test UIs
-  hideAllTests();
+function showFinalResults(userInfo, allScores, prediction, probability, memoryPercentile, executivePercentile, reasoningPercentile) {
+  // Show final results section
+   document.getElementById("testTitle").innerText = "🌟 All Tests Completed";
+  const finalResults = document.getElementById("final-results");
+  finalResults.style.display = "block";
+  finalResults.classList.add("fade-in");
 
+  // Set user info
+  document.getElementById("user-gender").textContent = userInfo.gender;
+  document.getElementById("user-age").textContent = userInfo.age;
+  document.getElementById("user-education").textContent = userInfo.education;
 
-  document.getElementById("testTitle").innerText = "🌟 All Tests Completed";
+  // Set test scores
+  document.getElementById("final-forward-score").textContent = allScores.forward;
+  document.getElementById("final-reverse-score").textContent = allScores.reverse;
+  document.getElementById("final-digit-score").textContent = allScores.digit;
+  document.getElementById("final-trailsA-score").textContent = allScores.trailsA;
+  document.getElementById("final-trailsB-score").textContent = allScores.trailsB;
+  document.getElementById("final-grammar-score").textContent = allScores.grammar;
+  document.getElementById("final-matrices-score").textContent = allScores.matrices;
 
-
-  document.getElementById("user-gender").textContent    = participantData.gender;
-  document.getElementById("user-age").textContent       = participantData.age;
-  document.getElementById("user-education").textContent = participantData.education;
-
-  // Populate each test score into its unique final-results span
-  document.getElementById("final-forward-score").textContent   = scores.forward;
-  document.getElementById("final-reverse-score").textContent   = scores.reverse;
-  document.getElementById("final-digit-score").textContent     = scores.digit;
-  document.getElementById("final-trailsA-score").textContent   = scores.trailsA;
-  document.getElementById("final-trailsB-score").textContent   = scores.trailsB;
-  document.getElementById("final-grammar-score").textContent   = scores.grammar;
-  document.getElementById("final-matrices-score").textContent  = scores.matrices;
-
-  // Populate the model’s prediction and probability
+    // Populate the model’s prediction and probability
   document.getElementById("predictionResult").textContent  =
     `Prediction: ${prediction === 1 ? 'Positive' : 'Negative'}`;
   document.getElementById("probabilityResult").textContent =
     `Probability: ${(probability * 100).toFixed(2)}%`;
 
-
-  const finalResults = document.getElementById("final-results");
-  finalResults.style.display = "block";
-  finalResults.classList.add("fade-in");
-
-  const modelResults = document.getElementById("model-results");
-  modelResults.style.display = "block";
-  modelResults.classList.add("fade-in");
+  // Show percentile results
+  const percentileResults = document.getElementById("percentile-results");
+  percentileResults.style.display = "block";
+  document.getElementById("memory-percentile").textContent = `${memoryPercentile}%`;
+  document.getElementById("executive-percentile").textContent = `${executivePercentile}%`;
+  document.getElementById("reasoning-percentile").textContent = `${reasoningPercentile}%`;
 }
 
 
 // Submit Function
 function submitAllData() {
+
+  // CHANGES MADE
+  const memory_score     = (allScores.forward + allScores.reverse) / 2;
+  const executive_score  = (allScores.trailsA + allScores.trailsB) / 2;
+  const reasoning_score  = (allScores.grammar + allScores.digit + allScores.matrices) / 3;
+
   const data = {
-    participant: userInfo,  // Use userInfo here instead of participantData
-    scores: allScores
-  };
+  participant: userInfo,
+  scores: {
+    memory_score,
+    executive_score,
+    reasoning_score
+  }
+};
+
 
   // Send the data to the backend
   fetch('http://localhost:5000/submit', {
@@ -280,7 +299,8 @@ function submitAllData() {
     // Check if the response contains prediction and probability
     if (data.prediction !== undefined && data.probability !== undefined) {
       // Pass the prediction and probability to showFinalResults
-      showFinalResults(userInfo, allScores, data.prediction, data.probability);
+      showFinalResults(userInfo, allScores, data.prediction, data.probability, data.memory_percentile,
+      data.executive_percentile, data.reasoning_percentile);
     } else {
       alert("Unexpected response format. Please check the backend.");
     }
@@ -734,3 +754,4 @@ function submitAllData() {
   };
 </script>
 </html>
+
