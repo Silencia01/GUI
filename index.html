@@ -115,7 +115,7 @@
   <p>Education: <span id="user-education"></span></p>
 
   <h2>🧠 Test Scores</h2>
-  <ul id="final-scores-list" style="list-style: none; padding: 0;">
+  <ul style="list-style: none; padding: 0;">
     <li>Memory Span (Forward): <span id="final-forward-score"></span></li>
     <li>Memory Span (Reverse): <span id="final-reverse-score"></span></li>
     <li>Digit Symbol Coding: <span id="final-digit-score"></span></li>
@@ -140,28 +140,44 @@
 
   <button id="submit-data" onclick="submitAllData()">Submit All Data</button>
 
-  <!-- Move the chart‐view button INSIDE and hide it by default -->
-  <button
-    id="open-chart-btn"
-    onclick="openChartView()"
-    style="display: none; margin-top: 1em;"
-  >
-    View Cognitive Radar Chart
-  </button>
+  <!-- Chart Buttons (hidden until results) -->
+  <div style="margin-top: 1.5em;">
+    <button id="open-cognitive-chart-btn" onclick="openChartView()" style="display: none; margin-right:1em;">
+      View Cognitive Radar Chart
+    </button>
+    <button id="open-raw-chart-btn" onclick="openRawBarChartView()" style="display: none; margin-right:1em;">
+      View Raw Test Scores Bar Chart
+    </button>
+    <button id="open-cognitive-bar-chart-btn" onclick="openCognitiveBarChartView()" style="display: none;">
+      View Cognitive Percentiles Bar Chart
+    </button>
+  </div>
 </div>
 
-<!-- Dedicated Chart Window -->
+<!-- Radar Chart Window -->
 <div id="chart-window" style="display: none; text-align: center; padding: 2em;">
   <h2>📊 Cognitive Radar Chart</h2>
-  <div id="radar-chart" style="width: 100%; height: 400px; margin: auto;"></div>
+  <div id="radar-chart" style="width:100%; height:400px; margin:auto;"></div>
   <button onclick="closeChartView()">← Back to Results</button>
 </div>
 
 <!-- Bar Chart Window -->
 <div id="bar-chart-window" style="display: none; text-align: center; padding: 2em;">
-  <h2>📊 Cognitive Bar Chart</h2>
-  <div id="bar-chart" style="width: 100%; height: 400px; margin: auto;"></div>
-  <div id="score-feedback" style="margin-top: 2em; font-style: italic;"></div>
+  <!-- Raw Scores Chart -->
+  <div id="bar-chart-container" style="display: none;">
+    <h2>📊 Individual Test Scores</h2>
+    <div id="bar-chart" style="width:100%; height:400px; margin:auto;"></div>
+  </div>
+
+  <!-- Cognitive Percentiles Chart -->
+  <div id="cognitive-bar-chart-container" style="display: none;">
+    <h2 style="margin-top:2em;">📊 Cognitive Domain Percentiles</h2>
+    <div id="cognitive-bar-chart" style="width:100%; height:400px; margin:auto;"></div>
+
+    <!-- Moved feedback here under the Percentiles header -->
+    <div id="percentile-feedback" style="margin-top:1em; font-style:italic;"></div>
+  </div>
+
   <button onclick="closeBarChartView()">← Back to Results</button>
 </div>
 
@@ -211,7 +227,7 @@ window.onload = function() {
   document.getElementById("user-info-error").style.display = "none";
 };
 
-// lobal state variable
+// global state variable
 let userInfo = {
   gender: '',
   age: '',
@@ -257,10 +273,10 @@ document.getElementById("userInfoSubmitBtn").addEventListener("click", function(
   console.log("User info saved:", userInfo);
 });
 
-    // Global store for numeric percentiles
+   // Global store
   let currentCognitiveScores = {};
+  let currentAllScores = {};
 
-  // Map backend labels → numeric values
   function mapPercentileLabel(label) {
     switch (label) {
       case "Very Low":  return 10;
@@ -272,132 +288,165 @@ document.getElementById("userInfoSubmitBtn").addEventListener("click", function(
     }
   }
 
-  // Render the radar chart via Plotly
+  // --- Simple Buckets for Feedback ---
+  function getPercentileLabel(p) {
+    if (p <= 25) return 'Below Average';
+    if (p <= 50) return 'Average';
+    return 'Above Average';
+  }
+
+  function showPercentileFeedback() {
+    const mem = parseInt(document.getElementById('memory-percentile').textContent, 10);
+    const exe = parseInt(document.getElementById('executive-percentile').textContent, 10);
+    const rea = parseInt(document.getElementById('reasoning-percentile').textContent, 10);
+
+    const lines = [
+      `Memory: ${getPercentileLabel(mem)} (${mem}th percentile)`,
+      `Executive: ${getPercentileLabel(exe)} (${exe}th percentile)`,
+      `Reasoning: ${getPercentileLabel(rea)} (${rea}th percentile)`
+    ];
+
+    document.getElementById('percentile-feedback').innerHTML = lines.join('<br>');
+  }
+
+  // --- Chart Renderers ---
   function renderRadarChart(cognitiveScores) {
-    console.log("🗺️ Rendering radar with:", cognitiveScores);
-    if (typeof Plotly === 'undefined') {
-      console.error("Plotly is not loaded.");
-      return;
-    }
-    const data = [{
-      type:  'scatterpolar',
-      r:     Object.values(cognitiveScores),
+    if (typeof Plotly === 'undefined') return console.error("Plotly not loaded");
+    Plotly.newPlot('radar-chart', [{
+      type: 'scatterpolar',
+      r:    Object.values(cognitiveScores),
       theta: Object.keys(cognitiveScores),
-      fill:  'toself',
-      name:  'Percentiles'
-    }];
-    const layout = {
-      polar: {
-        radialaxis: {
-          visible: true,
-          range: [0, 100]
-        }
-      },
+      fill: 'toself'
+    }], {
+      polar: { radialaxis: { range: [0,100] }},
       showlegend: false,
-      title:       'Cognitive Domain Percentiles'
-    };
-    Plotly.newPlot('radar-chart', data, layout);
+      title: 'Cognitive Domain Percentiles'
+    });
   }
 
-  // Show final results and prepare chart data
-  function showFinalResults(
-    userInfo,
-    allScores,
-    prediction,
-    probability,
-    memoryPercentile,
-    executivePercentile,
-    reasoningPercentile
-  ) {
-    // 1) Update title
-    document.getElementById("testTitle").innerText = "🌟 All Tests Completed";
+  function renderRawScoreBarChart(allScores) {
+    Plotly.newPlot('bar-chart', [{
+      x: ["Mem F","Mem R","Digit","Trail A","Trail B","Grammar","Matrices"],
+      y: [allScores.forward,allScores.reverse,allScores.digit,allScores.trailsA,allScores.trailsB,allScores.grammar,allScores.matrices],
+      type: 'bar',
+      text: [allScores.forward,allScores.reverse,allScores.digit,allScores.trailsA,allScores.trailsB,allScores.grammar,allScores.matrices],
+      textposition: 'auto'
+    }], {
+      title: 'Raw Test Scores',
+      yaxis: { title: 'Score', rangemode: 'tozero' },
+      margin: { t:50, b:100 }
+    });
+  }
 
-    // 2) Show results container
-    const finalResults = document.getElementById("final-results");
-    finalResults.style.display = "block";
-    finalResults.classList.add("fade-in");
+  function renderCognitiveBarChart(cognitiveScores) {
+    Plotly.newPlot('cognitive-bar-chart', [{
+      x: Object.keys(cognitiveScores),
+      y: Object.values(cognitiveScores),
+      type: 'bar',
+      text: Object.values(cognitiveScores).map(v => v + "th"),
+      textposition: 'auto'
+    }], {
+      title: 'Cognitive Domain Percentiles',
+      yaxis: { title: 'Percentile', range: [0,100] },
+      margin: { t:50, b:100 }
+    });
+  }
 
-    // 3) Populate user info
-    document.getElementById("user-gender").textContent    = userInfo.gender;
-    document.getElementById("user-age").textContent       = userInfo.age;
-    document.getElementById("user-education").textContent = userInfo.education;
+  // --- Displaying Results ---
+  function showFinalResults(userInfo, allScores, prediction, probability, memPerc, execPerc, reasPerc) {
+    // Populate participant info
+    document.getElementById('user-gender').textContent    = userInfo.gender;
+    document.getElementById('user-age').textContent       = userInfo.age;
+    document.getElementById('user-education').textContent = userInfo.education;
 
-    // 4) Populate raw test scores
-    document.getElementById("final-forward-score").textContent  = allScores.forward;
-    document.getElementById("final-reverse-score").textContent  = allScores.reverse;
-    document.getElementById("final-digit-score").textContent    = allScores.digit;
-    document.getElementById("final-trailsA-score").textContent  = allScores.trailsA;
-    document.getElementById("final-trailsB-score").textContent  = allScores.trailsB;
-    document.getElementById("final-grammar-score").textContent  = allScores.grammar;
-    document.getElementById("final-matrices-score").textContent = allScores.matrices;
+    // Populate raw scores
+    document.getElementById('final-forward-score').textContent  = allScores.forward;
+    document.getElementById('final-reverse-score').textContent  = allScores.reverse;
+    document.getElementById('final-digit-score').textContent    = allScores.digit;
+    document.getElementById('final-trailsA-score').textContent  = allScores.trailsA;
+    document.getElementById('final-trailsB-score').textContent  = allScores.trailsB;
+    document.getElementById('final-grammar-score').textContent  = allScores.grammar;
+    document.getElementById('final-matrices-score').textContent = allScores.matrices;
 
-    // 5) Show ML model output
-    const modelResults = document.getElementById("model-results");
-    modelResults.style.display = "block";
-    modelResults.classList.add("fade-in");
-    document.getElementById("predictionResult").textContent  = `Prediction: ${prediction}`;
-    document.getElementById("probabilityResult").textContent = `Confidence: ${(probability * 100).toFixed(2)}%`;
+    // Show ML model output
+    document.getElementById('model-results').style.display = 'block';
+    document.getElementById('predictionResult').textContent  = `Prediction: ${prediction}`;
+    document.getElementById('probabilityResult').textContent = `Confidence: ${(probability*100).toFixed(1)}%`;
 
-    // 6) Show textual percentiles
-    const percentileResults = document.getElementById("percentile-results");
-    percentileResults.style.display = "block";
-    document.getElementById("memory-percentile").textContent    = memoryPercentile;
-    document.getElementById("executive-percentile").textContent = executivePercentile;
-    document.getElementById("reasoning-percentile").textContent = reasoningPercentile;
+    // Show textual percentiles
+    document.getElementById('percentile-results').style.display = 'block';
+    document.getElementById('memory-percentile').textContent    = memPerc;
+    document.getElementById('executive-percentile').textContent = execPerc;
+    document.getElementById('reasoning-percentile').textContent = reasPerc;
 
-    // 7) Map labels → numeric and store globally
+    // Show the feedback immediately under the percentiles
+    showPercentileFeedback();
+
+    // Store for charts
+    currentAllScores = allScores;
     currentCognitiveScores = {
-      Memory:    mapPercentileLabel(memoryPercentile),
-      Executive: mapPercentileLabel(executivePercentile),
-      Reasoning: mapPercentileLabel(reasoningPercentile)
+      Memory:    mapPercentileLabel(memPerc),
+      Executive: mapPercentileLabel(execPerc),
+      Reasoning: mapPercentileLabel(reasPerc)
     };
 
-    // 8) Hide chart window (if it was open) and reveal chart button
-    document.getElementById("chart-window").style.display      = "none";
-    document.getElementById("open-chart-btn").style.display    = "inline-block";
+    // Reveal chart buttons & results container
+    document.getElementById('open-cognitive-chart-btn').style.display     = 'inline-block';
+    document.getElementById('open-raw-chart-btn').style.display           = 'inline-block';
+    document.getElementById('open-cognitive-bar-chart-btn').style.display = 'inline-block';
+    document.getElementById('final-results').style.display                = 'block';
   }
 
-  // Open the dedicated chart window
+  // --- Button Handlers ---
   function openChartView() {
-    document.getElementById("final-results").style.display = "none";
-    document.getElementById("chart-window").style.display  = "block";
+    document.getElementById('final-results').style.display = 'none';
+    document.getElementById('chart-window').style.display  = 'block';
     renderRadarChart(currentCognitiveScores);
   }
-
-  // Close chart window and return to results
   function closeChartView() {
-    document.getElementById("chart-window").style.display  = "none";
-    document.getElementById("final-results").style.display = "block";
+    document.getElementById('chart-window').style.display  = 'none';
+    document.getElementById('final-results').style.display = 'block';
   }
 
-  // Submit Function
+  function openRawBarChartView() {
+    document.getElementById('final-results').style.display               = 'none';
+    document.getElementById('bar-chart-window').style.display            = 'block';
+    document.getElementById('bar-chart-container').style.display         = 'block';
+    document.getElementById('cognitive-bar-chart-container').style.display = 'none';
+    renderRawScoreBarChart(currentAllScores);
+  }
+  function openCognitiveBarChartView() {
+    document.getElementById('final-results').style.display               = 'none';
+    document.getElementById('bar-chart-window').style.display            = 'block';
+    document.getElementById('bar-chart-container').style.display         = 'none';
+    document.getElementById('cognitive-bar-chart-container').style.display = 'block';
+    renderCognitiveBarChart(currentCognitiveScores);
+  }
+  function closeBarChartView() {
+    document.getElementById('bar-chart-window').style.display = 'none';
+    document.getElementById('final-results').style.display    = 'block';
+  }
+
+  // --- Data Submission ---
   function submitAllData() {
-    // Compute composite scores
-    const memory_score    = (allScores.forward + allScores.reverse) / 2;
-    const executive_score = (allScores.trailsA + allScores.trailsB) / 2;
-    const reasoning_score = (allScores.grammar + allScores.digit + allScores.matrices) / 3;
-
-    const data = {
-      participant: userInfo,
-      scores: {
-        memory_score,
-        executive_score,
-        reasoning_score
-      }
-    };
-
     fetch('http://localhost:5000/submit', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        participant: userInfo,
+        scores: {
+          memory_score:    (currentAllScores.forward + currentAllScores.reverse)/2,
+          executive_score: (currentAllScores.trailsA + currentAllScores.trailsB)/2,
+          reasoning_score: (currentAllScores.grammar + currentAllScores.digit + currentAllScores.matrices)/3
+        }
+      })
     })
-    .then(response => response.json())
+    .then(res => res.json())
     .then(data => {
-      console.log("Data submitted successfully:", data);
-      if (data.prediction !== undefined && data.probability !== undefined) {
+      if (data.prediction != null) {
         showFinalResults(
           userInfo,
-          allScores,
+          currentAllScores,
           data.prediction,
           data.probability,
           data.memory_percentile,
@@ -405,12 +454,12 @@ document.getElementById("userInfoSubmitBtn").addEventListener("click", function(
           data.reasoning_percentile
         );
       } else {
-        alert("Unexpected response format. Please check the backend.");
+        alert("Unexpected response");
       }
     })
-    .catch(error => {
-      console.error("Error submitting data:", error);
-      alert("Error submitting data. Please try again.");
+    .catch(err => {
+      console.error("Error:", err);
+      alert("Submission failed");
     });
   }
 
