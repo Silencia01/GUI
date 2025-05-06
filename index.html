@@ -38,7 +38,7 @@
     <li><em>No names or identifying information are collected or stored.</em></li>
   </ul>
 
-  <p style="text-align: center; font-weight: bold;">✅ Press “Start” to begin your journey.</p>
+  <p style="text-align: center; font-weight: bold;">✅Press Start to begin.</p>
 
   <div style="text-align: center; margin-top: 20px;">
     <button onclick="startAssessment()" style="padding: 12px 24px; font-size: 16px; background-color: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">Start</button>
@@ -443,6 +443,7 @@ function renderCognitiveBarChart(cognitiveScores) {
 
 // --------------- Final Results Display ---------------
 function showFinalResults(user, allScoresIn, prediction, probability, memPerc, execPerc, reasPerc) {
+ document.getElementById("testTitle").innerText = "🌟 All Tests Completed";
   userInfo = user;
   // Participant Info
   document.getElementById('user-gender').textContent    = user.gender;
@@ -1006,4 +1007,3 @@ function closeSubmitDataPopup() {
   };
 </script>
 </html>
-
