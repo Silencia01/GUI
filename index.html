@@ -47,6 +47,7 @@
 
   <!-- ─────── Main Page Content ─────── -->
   <div class="content">
+    <div id="memory-test" style="display: none;">
     <h1 id="testTitle">🧠 Forward and Reverse Memory Span Test</h1>
     <p id="instructions">
       This is a training test for spatial and visual memory capacity.
@@ -271,6 +272,7 @@
 function startAssessment() {
   document.getElementById("intro-section").style.display = "none";
   document.getElementById("user-info-modal").style.display = "block";
+  document.getElementById("memory-test").style.display = "block";
 }
 
 window.onload = function() {
