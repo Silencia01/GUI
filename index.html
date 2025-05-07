@@ -460,9 +460,10 @@ function showFinalResults(user, allScoresIn, prediction, probability, memPerc, e
   document.getElementById('final-grammar-score').textContent  = allScoresIn.grammar;
   document.getElementById('final-matrices-score').textContent = allScoresIn.matrices;
   // Model Output
+  const predLabel = prediction === 1 ? 'Positive' : 'Negative';
   document.getElementById('model-results').style.display = 'block';
-  document.getElementById('predictionResult').textContent  = `Prediction: ${prediction}`;
-  document.getElementById('probabilityResult').textContent = `Confidence: ${(probability*100).toFixed(1)}%`;
+  document.getElementById('predictionResult').textContent    = `Prediction: ${predLabel}`;
+  document.getElementById('probabilityResult').textContent  = `Probability: ${(probability*100).toFixed(1)}%`;
   // Percentiles
   document.getElementById('percentile-results').style.display   = 'block';
   document.getElementById('memory-percentile').textContent      = memPerc;
