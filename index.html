@@ -468,13 +468,8 @@ function showFinalResults(user, allScoresIn, prediction, probability, memPerc, e
   document.getElementById('memory-percentile').textContent      = memPerc;
   document.getElementById('executive-percentile').textContent   = execPerc;
   document.getElementById('reasoning-percentile').textContent   = reasPerc;
-  // Feedback & Summary
-  showPercentileFeedback();
-  document.getElementById('summary-text').innerHTML            = generateSummary();
-  document.getElementById('summary-insight').style.display      = 'block';
-  // Store for charts
-  currentAllScores = allScoresIn;
-  currentCognitiveScores  = {
+ currentAllScores = allScoresIn;
+  currentCognitiveScores = {
     Memory:    mapPercentileLabel(memPerc),
     Executive: mapPercentileLabel(execPerc),
     Reasoning: mapPercentileLabel(reasPerc)
@@ -484,6 +479,11 @@ function showFinalResults(user, allScoresIn, prediction, probability, memPerc, e
     Executive: execPerc,
     Reasoning: reasPerc
   };
+
+  // Feedback & Summary
+  showPercentileFeedback();
+  document.getElementById('summary-text').innerHTML = generateSummary();
+  document.getElementById('summary-insight').style.display = 'block';
   // Reveal chart buttons
   ['open-cognitive-chart-btn','open-raw-chart-btn','open-cognitive-bar-chart-btn']
     .forEach(id => document.getElementById(id).style.display = 'inline-block');
